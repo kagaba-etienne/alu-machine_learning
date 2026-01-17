@@ -4,6 +4,22 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pycodestyle = "*"
+autopep8 = "*"
+numpy = "*"
+matplotlib = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
+
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
 numpy = "*"
 matplotlib = "*"
 pycodestyle = "==2.4.*"
