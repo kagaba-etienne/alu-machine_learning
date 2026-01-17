@@ -64,4 +64,3 @@ axis['E'].set_title("Project A", fontsize="x-small")
 
 plt.tight_layout()
 plt.show()
-
