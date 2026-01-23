@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+Module that defines a function to transpose a matrix.
+"""
+
 
 def matrix_transpose(matrix):
     """Transpose a given matrix.
