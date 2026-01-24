@@ -14,6 +14,8 @@ def matrix_shape(matrix):
         tuple: A list of integers representing
         the shape of the matrix.
     """
+    if not isinstance(matrix, list):
+        return []
     dimensions = [len(matrix)]
     for row in matrix:
         if not isinstance(row, list):
