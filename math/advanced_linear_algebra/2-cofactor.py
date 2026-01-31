@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Docstring for math.advanced_linear_algebra.2-cofactor
+Calculate the cofactor matrix of a square matrix.
 """
 
 

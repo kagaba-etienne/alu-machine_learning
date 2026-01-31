@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Docstring for math.advanced_linear_algebra.1-minor
+Calculate the minor matrix of a square matrix.
 """
 
 
