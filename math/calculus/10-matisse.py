@@ -3,9 +3,11 @@
 Calculates the derivative of a polynomial
 """
 
+
 def poly_derivative(poly):
     """
-    Calculates the derivative of a polynomial represented by a list of coefficients.
+    Calculates the derivative of a polynomial represented by
+    a list of coefficients.
 
     Args:
         poly (list): A list of coefficients where the index is the power of x.
@@ -26,7 +28,7 @@ def poly_derivative(poly):
     # We start the range at 1 because the constant at index 0 drops out
     derivative = [poly[i] * i for i in range(1, len(poly))]
 
-    # 4. Zero Edge Case: If the resulting derivative is effectively zero 
+    # 4. Zero Edge Case: If the resulting derivative is effectively zero
     # (e.g., poly was [5, 0, 0]), return a clean [0]
     if all(coeff == 0 for coeff in derivative):
         return [0]
