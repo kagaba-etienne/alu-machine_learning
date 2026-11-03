@@ -28,7 +28,7 @@ def validate(Observations, Transition, Emission, Initial, iterations):
         return None
     steps = Observations.shape[0]
     n_states, n_obs = Emission.shape
-    if steps < 1 or n_states < 1 or n_obs < 1:
+    if steps < 2 or n_states < 1 or n_obs < 1:
         return None
     if Transition.shape != (n_states, n_states):
         return None
@@ -54,11 +54,10 @@ def validate(Observations, Transition, Emission, Initial, iterations):
 
 
 def baum_welch(Observations, Transition, Emission, Initial, iterations=1000):
-    """Re-estimate a hidden Markov model with the Baum-Welch algorithm.
+    """Re-estimate transition and emission probabilities with Baum-Welch.
 
-    Forward and backward probabilities are scaled at each time step so the
-    products stay in range. The starting distribution is updated internally
-    and is not returned.
+    Forward and backward probabilities are kept in linear space. The
+    starting distribution is held fixed for every iteration.
 
     Args:
         Observations: ndarray of shape (T,) with observation indices.
@@ -79,64 +78,40 @@ def baum_welch(Observations, Transition, Emission, Initial, iterations=1000):
     steps = indices.shape[0]
     trans = Transition.astype(float).copy()
     emit = Emission.astype(float).copy()
-    start = Initial.astype(float).copy()
+    start = Initial[:, 0].astype(float)
 
     for _ in range(iterations):
         alpha = np.zeros((n_states, steps))
-        scale = np.zeros(steps)
-        alpha[:, 0] = start[:, 0] * emit[:, indices[0]]
-        scale[0] = np.sum(alpha[:, 0])
-        if scale[0] == 0 or not np.isfinite(scale[0]):
-            return None, None
-        alpha[:, 0] /= scale[0]
+        alpha[:, 0] = start * emit[:, indices[0]]
         for time in range(1, steps):
             previous = np.matmul(alpha[:, time - 1], trans)
             alpha[:, time] = previous * emit[:, indices[time]]
-            scale[time] = np.sum(alpha[:, time])
-            if scale[time] == 0 or not np.isfinite(scale[time]):
-                return None, None
-            alpha[:, time] /= scale[time]
 
         beta = np.zeros((n_states, steps))
-        beta[:, -1] = 1.0 / scale[-1]
+        beta[:, -1] = 1
         for time in range(steps - 2, -1, -1):
             coeff = emit[:, indices[time + 1]] * beta[:, time + 1]
-            beta[:, time] = np.matmul(trans, coeff) / scale[time]
+            beta[:, time] = np.matmul(trans, coeff)
 
-        gamma = alpha * beta
-        gamma_sum = np.sum(gamma, axis=0)
-        if np.any(gamma_sum == 0) or not np.all(np.isfinite(gamma)):
-            return None, None
-        gamma /= gamma_sum
+        xi = np.zeros((n_states, n_states, steps - 1))
+        for time in range(steps - 1):
+            coeff = emit[:, indices[time + 1]] * beta[:, time + 1]
+            numer = (
+                alpha[:, time][:, np.newaxis]
+                * trans
+                * coeff[np.newaxis, :]
+            )
+            denom = np.sum(numer)
+            xi[:, :, time] = numer / denom
 
-        if steps > 1:
-            xi_sum = np.zeros((n_states, n_states))
-            for time in range(steps - 1):
-                coeff = emit[:, indices[time + 1]] * beta[:, time + 1]
-                numer = (
-                    alpha[:, time][:, np.newaxis]
-                    * trans
-                    * coeff[np.newaxis, :]
-                )
-                denom = np.sum(numer)
-                if denom == 0 or not np.isfinite(denom):
-                    return None, None
-                xi_sum += numer / denom
-            denom_t = np.sum(gamma[:, :-1], axis=1).reshape((-1, 1))
-            if np.any(denom_t == 0):
-                return None, None
-            trans = xi_sum / denom_t
-
-        denom_e = np.sum(gamma, axis=1)
-        if np.any(denom_e == 0):
-            return None, None
-        new_emit = np.zeros_like(emit)
+        gamma = np.sum(xi, axis=1)
+        state_mass = np.sum(gamma, axis=1).reshape((-1, 1))
+        trans = np.sum(xi, axis=2) / state_mass
+        last = np.sum(xi[:, :, steps - 2], axis=0).reshape((-1, 1))
+        gamma = np.hstack((gamma, last))
+        emit_mass = np.sum(gamma, axis=1).reshape((-1, 1))
         for symbol in range(n_obs):
-            mask = indices == symbol
-            new_emit[:, symbol] = np.sum(gamma[:, mask], axis=1) / denom_e
-        emit = new_emit
-        start = gamma[:, 0].reshape((-1, 1))
-        if not np.all(np.isfinite(trans)) or not np.all(np.isfinite(emit)):
-            return None, None
+            emit[:, symbol] = np.sum(gamma[:, indices == symbol], axis=1)
+        emit = emit / emit_mass
 
     return trans, emit
