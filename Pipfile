@@ -8,6 +8,8 @@ pycodestyle = "*"
 autopep8 = "*"
 numpy = "*"
 matplotlib = "*"
+tensorflow = "*"
+scikit-learn = "*"
 
 [dev-packages]
 
