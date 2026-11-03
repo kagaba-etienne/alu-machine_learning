@@ -14,7 +14,8 @@ def optimum_k(X, kmin=1, kmax=None, iterations=1000):
         kmin: positive integer containing the minimum number of
             clusters to check for (inclusive).
         kmax: positive integer containing the maximum number of
-            clusters to check for (inclusive).
+            clusters to check for (inclusive). None uses the number
+            of data points.
         iterations: positive integer containing the maximum number of
             iterations for K-means.
 
@@ -29,9 +30,11 @@ def optimum_k(X, kmin=1, kmax=None, iterations=1000):
         return None, None
     if type(kmin) is not int or kmin <= 0:
         return None, None
-    if type(iterations) is not int or iterations <= 0:
+    if kmax is None:
+        kmax = X.shape[0]
+    if type(kmax) is not int or kmax <= 0 or kmax <= kmin:
         return None, None
-    if kmax is None or type(kmax) is not int or kmax <= kmin:
+    if type(iterations) is not int or iterations <= 0:
         return None, None
 
     results = []
